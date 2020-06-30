@@ -10,8 +10,6 @@
         <input name="title" id="title" value="{{ request.form['title'] }}" required>
         <label for="body">Body</label>
         <textarea name="body" id="body">{{ request.form['body'] }}</textarea>
-        {# <label for="lang">Language</label>
-        <textarea name="lang" id="lang">{{ request.form['lang'] }}</textarea> #}
         <select name="lang" id="lang">
             {% for lang in language %}
             <option value= "{{lang}}">{{lang}}</option>"
