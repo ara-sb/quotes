@@ -12,13 +12,15 @@ from quotes.db import get_db
 
 bp = Blueprint('blog', __name__)
 
+language = ['Spanish', 'English']
+
 
 @bp.route('/')
 def index():
     """Show all the posts, most recent first."""
     db = get_db()
     posts = db.execute(
-        'SELECT p.id, title, body, created, author_id, username'
+        'SELECT p.id, title, body, lang, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created DESC'
     ).fetchall()
@@ -32,6 +34,7 @@ def create():
     if request.method == 'POST':
         title = request.form['title']
         body = request.form['body']
+        lang = request.form['lang']
         error = None
 
         if not title:
@@ -42,14 +45,14 @@ def create():
         else:
             db = get_db()
             db.execute(
-                'INSERT INTO post (title, body, author_id)'
-                'VALUES (?, ?, ?)',
-                (title, body, g.user['id'])
+                'INSERT INTO post (title, body, lang, author_id)'
+                'VALUES (?, ?, ?, ?)',
+                (title, body, lang, g.user['id'])
             )
             db.commit()
             return redirect(url_for('blog.index'))
 
-    return render_template('blog/create.html')
+    return render_template('blog/create.html', language=language)
 
 
 def get_post(id, check_author=True):
@@ -64,7 +67,7 @@ def get_post(id, check_author=True):
     :raise 403: if the current user isn't the author
     """
     post = get_db().execute(
-        'SELECT p.id, title, body, created, author_id, username'
+        'SELECT p.id, title, body, lang, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' WHERE p.id = ?',
         (id,)
@@ -88,6 +91,7 @@ def update(id):
     if request.method == 'POST':
         title = request.form['title']
         body = request.form['body']
+        lang = request.form['lang']
         error = None
 
         if not title:
@@ -98,14 +102,14 @@ def update(id):
         else:
             db = get_db()
             db.execute(
-                'UPDATE post SET title = ?, body = ?'
+                'UPDATE post SET title = ?, body = ?, lang = ?'
                 'WHERE id = ?',
-                (title, body, id)
+                (title, body, lang, id)
             )
             db.commit()
             return redirect(url_for('blog.index'))
 
-    return render_template('blog/update.html', post=post)
+    return render_template('blog/update.html', post=post, language=language)
 
 
 @bp.route('/<int:id>/delete', methods=('POST',))
