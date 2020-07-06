@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <label for="title">Title</label>
         <input name="title" id="title" value="{{ request.form['title'] or post['title'] }}" required>
         <label for="body">Body</label>
@@ -17,6 +17,10 @@
             <option value="{{langu}}" {{ 'selected' if langu == post['lang'] or langu == request.form['lang'] }}>{{ langu }}</option>
             {% endfor %}
         </select> <br>
+        
+        {# <textarea name="file" id="file">{{ request.form['img_url'] or post['img_url'] }}</textarea> #}
+        <label for="file">{{ request.form['img_url'] or post['img_url'] }}</label>
+        <input type="file" name="file">
         <input type="submit" value="Save">
     </form>
     <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post">

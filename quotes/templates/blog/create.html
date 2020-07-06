@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <label for="title">Title</label>
         <input name="title" id="title" value="{{ request.form['title'] }}" required>
         <label for="body">Body</label>
@@ -17,8 +17,13 @@
             <option value= "{{lang}}">{{lang}}</option>"
             {% endfor %}
         </select> <br>
+        <input type="file" name="file">
         <input type="submit" value="Save">
     </form>
+    {# <form method="post" action="create" >
+      
+      <input type="submit" value="Upload">
+    </form> #}
     <form action="{{ url_for('blog.index') }}" method="get">
         <input type="submit" value="Cancel">
     </form>

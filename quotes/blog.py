@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint
 from flask import flash
 from flask import g
@@ -6,9 +8,13 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from werkzeug.exceptions import abort
+from werkzeug.utils import secure_filename
 
 from quotes.auth import login_required
 from quotes.db import get_db
+
+UPLOAD_FOLDER = '/Users/ara/Documents/python/Ex_Files_Flask_Tutorial/quotes/static/user_files/'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 bp = Blueprint('blog', __name__)
 
@@ -20,7 +26,7 @@ def index():
     """Show all the posts, most recent first."""
     db = get_db()
     posts = db.execute(
-        'SELECT p.id, title, body, lang, tags, created, author_id, username'
+        'SELECT p.id, title, body, lang, tags, img_url, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created DESC'
     ).fetchall()
@@ -45,11 +51,18 @@ def create():
             flash(error)
         else:
             db = get_db()
-            db.execute(
-                'INSERT INTO post (title, body, lang, tags, author_id)'
-                'VALUES (?, ?, ?, ?, ?)',
-                (title, body, lang, tags, g.user['id'])
-            )
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                img_url = filename
+                db.execute('INSERT INTO post (title, body, lang, tags, img_url, author_id)'
+                           'VALUES (?, ?, ?, ?, ?, ?)',
+                           (title, body, lang, tags, img_url, g.user['id']))
+            else:
+                db.execute('INSERT INTO post (title, body, lang, tags, author_id)'
+                           'VALUES (?, ?, ?, ?, ?)',
+                           (title, body, lang, tags, g.user['id']))
             db.commit()
             return redirect(url_for('blog.index'))
 
@@ -68,7 +81,7 @@ def get_post(id, check_author=True):
     :raise 403: if the current user isn't the author
     """
     post = get_db().execute(
-        'SELECT p.id, title, body, lang, tags, created, author_id, username'
+        'SELECT p.id, title, body, lang, tags, img_url, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' WHERE p.id = ?',
         (id,)
@@ -94,6 +107,7 @@ def update(id):
         body = request.form['body']
         lang = request.form['lang']
         tags = request.form['tags']
+
         error = None
 
         if not title:
@@ -103,19 +117,33 @@ def update(id):
             flash(error)
         else:
             db = get_db()
-            db.execute(
-                'UPDATE post SET title = ?, body = ?, lang = ?, tags = ?'
-                'WHERE id = ?',
-                (title, body, lang, tags, id)
-            )
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                img_url = filename
+                db.execute('UPDATE post SET title = ?, body = ?, lang = ?, tags = ?, img_url = ?'
+                           'WHERE id = ?',
+                           (title, body, lang, tags, img_url, id)
+                           )
+            else:
+                db.execute('UPDATE post SET title = ?, body = ?, lang = ?, tags = ?'
+                           'WHERE id = ?',
+                           (title, body, lang, tags, id)
+                           )
+            # db.execute(
+            #     'UPDATE post SET title = ?, body = ?, lang = ?, tags = ?, img_url = ?'
+            #     'WHERE id = ?',
+            #     (title, body, lang, tags, "", id)
+            # )
             db.commit()
             return redirect(url_for('blog.index'))
 
     return render_template('blog/update.html', post=post, language=language)
 
 
-@bp.route('/<int:id>/delete', methods=('POST',))
-@login_required
+@ bp.route('/<int:id>/delete', methods=('POST',))
+@ login_required
 def delete(id):
     """Delete a post.
     Ensures that the post exists and that the logged in user is the
@@ -127,3 +155,8 @@ def delete(id):
     db.commit()
 
     return redirect(url_for('blog.index'))
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
