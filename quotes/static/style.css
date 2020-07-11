@@ -76,6 +76,46 @@ nav ul li a, nav ul li span, header .action {
     border: 1px solid #377ba8;
 }
 
+.post {
+    padding: 5px;
+}
+
+.image {
+    float: left;
+    margin-right: 10px;
+    width: 13%;
+}
+
+input[type="file"] {
+    display: block;
+}
+
+.imageThumb {
+    max-height: 75px;
+    border: 2px solid;
+    padding: 1px;
+    cursor: pointer;
+}
+
+.pip {
+    display: inline-block;
+    margin: 10px 10px 0 0;
+}
+
+.remove {
+    display: block;
+    background: #444;
+    border: 1px solid black;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+}
+
+.remove:hover {
+    background: white;
+    color: black;
+}
+
 .post>header {
     display: flex;
     align-items: flex-end;
@@ -103,6 +143,8 @@ nav ul li a, nav ul li span, header .action {
 
 .post .body {
     white-space: pre-line;
+    padding: 0px 5px 10px 0px;
+    line-height: 21px;
 }
 
 .post .footer {

@@ -12,6 +12,7 @@
         <article class="post">
             <header>
                 <div>
+                    <img class="image" alt="{{ post['title'] }}" src="{{ '/static/user_files/' ~ post['img_url'] }}"/>
                     <p class="body">"{{ post['body'] }}"</p>
                     <div class="author">–– {{ post['title'] }}</div>
                     <div class="footer">tags: </div>

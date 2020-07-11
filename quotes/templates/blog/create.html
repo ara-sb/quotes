@@ -17,14 +17,29 @@
             <option value= "{{lang}}">{{lang}}</option>"
             {% endfor %}
         </select> <br>
-        <input type="file" name="file">
+        <img class="image" id="image" src="" style="display: none"/>
+        <br>
+        <input id="file" type="file" name="file">
         <input type="submit" value="Save">
     </form>
-    {# <form method="post" action="create" >
-      
-      <input type="submit" value="Upload">
-    </form> #}
+
     <form action="{{ url_for('blog.index') }}" method="get">
         <input type="submit" value="Cancel">
     </form>
+
+<script type="text/javascript">
+    $("#file").change(function() {
+        var fileReader = new FileReader();
+        fileReader.onload = (function(e) {
+            $("#image").show();
+            $("#image").attr("src", e.target.result)
+            $('#image').Jcrop({
+                aspectRatio: 1,
+                setSelect: [50, 0, 300, 300],
+                allowResize: false
+            });
+        });
+        fileReader.readAsDataURL($(this)[0].files[0]);
+    });
+</script>
 {% endblock %}
