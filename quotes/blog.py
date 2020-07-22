@@ -38,7 +38,7 @@ def index():
 
 @bp.route('/filter', methods=('GET', 'POST'))
 def filter_post():
-    """Show filtered posts."""
+    """Show filtered posts by author, keyword or language."""
     if request.method == 'POST':
         search_query = request.form['search_query']
         if not search_query:
@@ -52,7 +52,20 @@ def filter_post():
             ' ORDER BY created DESC',
             ('%'+search_query+'%',)
         ).fetchall()
-        return render_template('blog/index.html', posts=filtered_posts)
+    else:
+        lang = request.args.get('lang')
+        if not lang:
+            return redirect(url_for('blog.index'))
+
+        db = get_db()
+        filtered_posts = db.execute(
+            'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+            ' FROM post p JOIN user u ON p.author_id = u.id'
+            ' WHERE lang = ?'
+            ' ORDER BY created DESC',
+            (lang,)
+        ).fetchall()
+    return render_template('blog/index.html', posts=filtered_posts)
 
 
 @bp.route('/create', methods=('GET', 'POST'))
