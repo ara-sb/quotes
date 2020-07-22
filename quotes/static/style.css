@@ -190,3 +190,43 @@ input[type=submit] {
     align-self: start;
     min-width: 10em;
 }
+
+.topnav {
+    overflow: hidden;
+}
+
+.topnav a {
+    float: right;
+    display: block;
+    color: #377ba8;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 17px;
+}
+
+.topnav .search-container form {
+    float: left;
+    display: flex;
+    flex-direction: row;
+}
+
+.topnav input[type=text] {
+    padding: 6px;
+    margin-top: 8px;
+    font-size: 17px;
+}
+
+.topnav .search-container button {
+    padding: 6px 10px;
+    margin-top: 8px;
+    margin-bottom: 17px;
+    background: #ddd;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+}
+
+.topnav .search-container button:hover {
+    background: #ccc;
+}

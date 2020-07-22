@@ -1,20 +1,25 @@
 {% extends 'base.html' %}
 
-{% block header %}
-    <h1>{% block title %}Quotes{% endblock %}</h1>
-    {% if g.user %}
-        <a class="action" href="{{ url_for('blog.create') }}">New</a>
-    {% endif %}
-{% endblock %}
-
 {% block content %}
+    <div class="topnav">
+        {% if g.user %}
+            <a href="{{ url_for('blog.create') }}">New</a>
+        {% endif %}
+        <div class="search-container">
+            <form action="/filter" method="post">
+                <input type="text" id="search_query" placeholder="Search.." name="search_query" value={{ request.form['search_query'] }}>
+                <button type="submit"><i class="fa fa-search"></i></button>
+            </form>
+        </div>
+    </div>
+    <hr>
     {% for post in posts %}
         <article class="post">
             <header>
                 <div>
-                    <img class="image" alt="{{ post['title'] }}" src="{{ '/static/user_files/' ~ post['img_url'] }}"/>
+                    <img class="image" alt="{{ post['author'] }}" src="{{ '/static/user_files/' ~ post['img_url'] }}"/>
                     <p class="body">"{{ post['body'] }}"</p>
-                    <div class="author">–– {{ post['title'] }}</div>
+                    <div class="author">–– {{ post['author'] }}</div>
                     <div class="footer">tags: </div>
                 </div>
                 <form action="{{ url_for('blog.index') }}" method="get">

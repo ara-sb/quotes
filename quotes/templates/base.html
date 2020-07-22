@@ -16,6 +16,7 @@
 <section class="content">
     <header>
         {% block header %}{% endblock %}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <script src="{{ url_for('static', filename='jquery-3.5.1.slim.min.js') }}"></script>
     </header>
     {% for message in get_flashed_messages() %}

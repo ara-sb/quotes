@@ -9,6 +9,7 @@ from flask import request
 from flask import url_for
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
+import logging
 
 from quotes.auth import login_required
 from quotes.db import get_db
@@ -26,11 +27,32 @@ def index():
     """Show all the posts, most recent first."""
     db = get_db()
     posts = db.execute(
-        'SELECT p.id, title, body, lang, tags, img_url, created, author_id, username'
+        'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created DESC'
     ).fetchall()
+    print(posts)
+    logging.info(posts)
     return render_template('blog/index.html', posts=posts)
+
+
+@bp.route('/filter', methods=('GET', 'POST'))
+def filter_post():
+    """Show filtered posts."""
+    if request.method == 'POST':
+        search_query = request.form['search_query']
+        if not search_query:
+            return redirect(url_for('blog.index'))
+
+        db = get_db()
+        filtered_posts = db.execute(
+            'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+            ' FROM post p JOIN user u ON p.author_id = u.id'
+            ' WHERE author LIKE ?'
+            ' ORDER BY created DESC',
+            ('%'+search_query+'%',)
+        ).fetchall()
+        return render_template('blog/index.html', posts=filtered_posts)
 
 
 @bp.route('/create', methods=('GET', 'POST'))
@@ -38,14 +60,14 @@ def index():
 def create():
     """Create a new post for the current user."""
     if request.method == 'POST':
-        title = request.form['title']
+        author = request.form['author']
         body = request.form['body']
         lang = request.form['lang']
         tags = request.form['tags']
         error = None
 
-        if not title:
-            error = 'Title is required.'
+        if not author:
+            error = 'Author is required.'
 
         if error is not None:
             flash(error)
@@ -56,13 +78,13 @@ def create():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(UPLOAD_FOLDER, filename))
                 img_url = filename
-                db.execute('INSERT INTO post (title, body, lang, tags, img_url, author_id)'
+                db.execute('INSERT INTO post (author, body, lang, tags, img_url, author_id)'
                            'VALUES (?, ?, ?, ?, ?, ?)',
-                           (title, body, lang, tags, img_url, g.user['id']))
+                           (author, body, lang, tags, img_url, g.user['id']))
             else:
-                db.execute('INSERT INTO post (title, body, lang, tags, author_id)'
+                db.execute('INSERT INTO post (author, body, lang, tags, author_id)'
                            'VALUES (?, ?, ?, ?, ?)',
-                           (title, body, lang, tags, g.user['id']))
+                           (author, body, lang, tags, g.user['id']))
             db.commit()
             return redirect(url_for('blog.index'))
 
@@ -81,7 +103,7 @@ def get_post(id, check_author=True):
     :raise 403: if the current user isn't the author
     """
     post = get_db().execute(
-        'SELECT p.id, title, body, lang, tags, img_url, created, author_id, username'
+        'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' WHERE p.id = ?',
         (id,)
@@ -103,15 +125,15 @@ def update(id):
     post = get_post(id)
 
     if request.method == 'POST':
-        title = request.form['title']
+        author = request.form['author']
         body = request.form['body']
         lang = request.form['lang']
         tags = request.form['tags']
 
         error = None
 
-        if not title:
-            error = 'Title is required.'
+        if not author:
+            error = 'Author is required.'
 
         if error is not None:
             flash(error)
@@ -122,20 +144,15 @@ def update(id):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(UPLOAD_FOLDER, filename))
                 img_url = filename
-                db.execute('UPDATE post SET title = ?, body = ?, lang = ?, tags = ?, img_url = ?'
+                db.execute('UPDATE post SET author = ?, body = ?, lang = ?, tags = ?, img_url = ?'
                            'WHERE id = ?',
-                           (title, body, lang, tags, img_url, id)
+                           (author, body, lang, tags, img_url, id)
                            )
             else:
-                db.execute('UPDATE post SET title = ?, body = ?, lang = ?, tags = ?'
+                db.execute('UPDATE post SET author = ?, body = ?, lang = ?, tags = ?'
                            'WHERE id = ?',
-                           (title, body, lang, tags, id)
+                           (author, body, lang, tags, id)
                            )
-            # db.execute(
-            #     'UPDATE post SET title = ?, body = ?, lang = ?, tags = ?, img_url = ?'
-            #     'WHERE id = ?',
-            #     (title, body, lang, tags, "", id)
-            # )
             db.commit()
             return redirect(url_for('blog.index'))
 
