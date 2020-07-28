@@ -7,6 +7,9 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_paginate import Pagination
+from flask_paginate import get_page_parameter
+from flask_paginate import get_page_args
 from werkzeug.exceptions import abort
 from werkzeug.utils import secure_filename
 import logging
@@ -22,6 +25,15 @@ bp = Blueprint('blog', __name__)
 language = ['Spanish', 'English']
 
 
+def get_pagination(posts):
+    # get_page_arg defaults to page 1, per_page of 10
+    page, per_page, offset = get_page_args()
+    pagination_posts = posts[offset: offset + per_page]
+    pagination = Pagination(page=page, per_page=per_page, offset=offset,
+                            total=len(posts), record_name='posts', css_framework='bootstrap4')
+    return page, per_page, pagination, pagination_posts
+
+
 @bp.route('/')
 def index():
     """Show all the posts, most recent first."""
@@ -31,9 +43,8 @@ def index():
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created DESC'
     ).fetchall()
-    print(posts)
-    logging.info(posts)
-    return render_template('blog/index.html', posts=posts)
+    page, per_page, pagination, pagination_posts = get_pagination(posts)
+    return render_template('blog/index.html', total_posts=len(posts), posts=pagination_posts, page=page, per_page=per_page, pagination=pagination)
 
 
 @bp.route('/filter', methods=('GET', 'POST'))
@@ -65,7 +76,9 @@ def filter_post():
             ' ORDER BY created DESC',
             (lang,)
         ).fetchall()
-    return render_template('blog/index.html', posts=filtered_posts)
+    page, per_page, pagination, pagination_posts = get_pagination(
+        filtered_posts)
+    return render_template('blog/index.html', total_posts=len(filtered_posts), posts=pagination_posts, page=page, per_page=per_page, pagination=pagination)
 
 
 @bp.route('/create', methods=('GET', 'POST'))

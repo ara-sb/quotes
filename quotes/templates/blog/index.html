@@ -15,7 +15,10 @@
         </div>
     </div>
     <hr>
+    <table>
+    <tbody>
     {% for post in posts %}
+        <tr>
         <article class="post">
             <header>
                 <div>
@@ -37,5 +40,10 @@
         {% if not loop.last %}
             <hr>
         {% endif %}
+        </tr>
     {% endfor %}
+    </tbody>
+    </table>
+    {{ pagination.info if total_posts > 10 }}
+    {{ pagination.links }}
 {% endblock %}
