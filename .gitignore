@@ -12,5 +12,6 @@ build/
 *.swp
 *~
 .DS_Store
-quotes/static/jquery-3.5.1.slim.min.js
+quotes/static/*.js
+quotes/static/*.css
 quotes/static/user_files/

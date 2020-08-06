@@ -11,7 +11,7 @@
         <label for="body">Body</label>
         <textarea name="body" id="body">{{ request.form['body'] or post['body'] }}</textarea>
         <label for="tags">Tags</label>
-        <textarea name="tags" id="tags">{{ request.form['tags'] or post['tags'] }}</textarea>
+        <input type="text" name="tags" id="tags" data-role="tagsinput" class="form-control" value="{{ request.form['tags'] or post['tags'] }}">
         <select name="lang" id="lang">
             {% for langu in language %}
             <option value="{{langu}}" {{ 'selected' if langu == post['lang'] or langu == request.form['lang'] }}>{{ langu }}</option>

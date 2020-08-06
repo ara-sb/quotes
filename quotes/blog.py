@@ -65,17 +65,28 @@ def filter_post():
         ).fetchall()
     else:
         lang = request.args.get('lang')
-        if not lang:
+        tag = request.args.get('tag')
+        if lang:
+            db = get_db()
+            filtered_posts = db.execute(
+                'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+                ' FROM post p JOIN user u ON p.author_id = u.id'
+                ' WHERE lang = ?'
+                ' ORDER BY created DESC',
+                (lang,)
+            ).fetchall()
+        elif tag:
+            logging.warning("'"+tag+"'")
+            db = get_db()
+            filtered_posts = db.execute(
+                'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+                ' FROM post p JOIN user u ON p.author_id = u.id'
+                ' WHERE tags LIKE ?'
+                ' ORDER BY created DESC',
+                ('%'+tag+'%',)
+            ).fetchall()
+        else:
             return redirect(url_for('blog.index'))
-
-        db = get_db()
-        filtered_posts = db.execute(
-            'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
-            ' FROM post p JOIN user u ON p.author_id = u.id'
-            ' WHERE lang = ?'
-            ' ORDER BY created DESC',
-            (lang,)
-        ).fetchall()
     page, per_page, pagination, pagination_posts = get_pagination(
         filtered_posts)
     return render_template('blog/index.html', total_posts=len(filtered_posts), posts=pagination_posts, page=page, per_page=per_page, pagination=pagination)

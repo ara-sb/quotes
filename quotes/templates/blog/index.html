@@ -25,7 +25,12 @@
                     <img class="image" alt="{{ post['author'] }}" src="{{ '/static/user_files/' ~ post['img_url'] }}"/>
                     <p class="body">"{{ post['body'] }}"</p>
                     <div class="author">–– {{ post['author'] }}</div>
-                    <div class="footer">tags: </div>
+                    <div class="footer">tags: 
+                    {% set list_tags = post['tags'].split(',') %}
+                    {% for tag in list_tags %}
+                        <a href="{{ '/filter?tag=' ~ tag}}">{{ tag }}</a>,
+                    {% endfor %} 
+                    </div>
                 </div>
                 <form action="{{ url_for('blog.index') }}" method="get">
                     <input type="submit" value="Like">
