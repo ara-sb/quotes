@@ -4,9 +4,9 @@
     <div class="topnav">
         {% if g.user %}
             <a href="{{ url_for('blog.create') }}">New</a>
-            <a href="/filter?lang=Spanish">Spanish</a>
-            <a href="/filter?lang=English">English</a>
         {% endif %}
+        <a href="/filter?lang=Spanish">Spanish</a>
+        <a href="/filter?lang=English">English</a>
         <div class="search-container">
             <form action="/filter" method="post">
                 <input type="text" id="search_query" placeholder="Search.." name="search_query" value={{ request.form['search_query'] }}>
