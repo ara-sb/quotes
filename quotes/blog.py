@@ -25,26 +25,25 @@ bp = Blueprint('blog', __name__)
 language = ['Spanish', 'English']
 
 
-def get_pagination(posts):
-    # get_page_arg defaults to page 1, per_page of 10
-    page, per_page, offset = get_page_args()
-    pagination_posts = posts[offset: offset + per_page]
-    pagination = Pagination(page=page, per_page=per_page, offset=offset,
-                            total=len(posts), record_name='posts', css_framework='bootstrap4')
-    return page, per_page, pagination, pagination_posts
-
-
 @bp.route('/')
 def index():
     """Show all the posts, most recent first."""
     db = get_db()
     posts = db.execute(
-        'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+        'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username, likes'
         ' FROM post p JOIN user u ON p.author_id = u.id'
         ' ORDER BY created DESC'
     ).fetchall()
     page, per_page, pagination, pagination_posts = get_pagination(posts)
-    return render_template('blog/index.html', total_posts=len(posts), posts=pagination_posts, page=page, per_page=per_page, pagination=pagination)
+
+    if len(posts) > 0 and g.user is not None:
+        liked_posts = get_liked_posts()
+        id_liked_posts = list(t['id'] for t in liked_posts)
+        return render_template('blog/index.html', total_posts=len(posts), posts=pagination_posts,
+                               liked_posts=id_liked_posts, page=page, per_page=per_page, pagination=pagination)
+
+    return render_template('blog/index.html', total_posts=len(posts), posts=pagination_posts,
+                           page=page, per_page=per_page, pagination=pagination)
 
 
 @bp.route('/filter', methods=('GET', 'POST'))
@@ -57,7 +56,7 @@ def filter_post():
 
         db = get_db()
         filtered_posts = db.execute(
-            'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+            'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username, likes'
             ' FROM post p JOIN user u ON p.author_id = u.id'
             ' WHERE author LIKE ?'
             ' ORDER BY created DESC',
@@ -66,34 +65,69 @@ def filter_post():
     else:
         lang = request.args.get('lang')
         tag = request.args.get('tag')
+        liked = request.args.get('liked')
         if lang:
             db = get_db()
             filtered_posts = db.execute(
-                'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+                'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username, likes'
                 ' FROM post p JOIN user u ON p.author_id = u.id'
                 ' WHERE lang = ?'
                 ' ORDER BY created DESC',
                 (lang,)
             ).fetchall()
         elif tag:
-            logging.warning("'"+tag+"'")
             db = get_db()
             filtered_posts = db.execute(
-                'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username'
+                'SELECT p.id, author, body, lang, tags, img_url, created, author_id, username, likes'
                 ' FROM post p JOIN user u ON p.author_id = u.id'
                 ' WHERE tags LIKE ?'
                 ' ORDER BY created DESC',
                 ('%'+tag+'%',)
             ).fetchall()
+        elif liked:
+            filtered_posts = get_liked_posts()
         else:
             return redirect(url_for('blog.index'))
     page, per_page, pagination, pagination_posts = get_pagination(
         filtered_posts)
-    return render_template('blog/index.html', total_posts=len(filtered_posts), posts=pagination_posts, page=page, per_page=per_page, pagination=pagination)
+    if len(filtered_posts) > 0 and g.user is not None:
+        liked_posts = get_liked_posts()
+        id_liked_posts = list(t['id'] for t in liked_posts)
+        return render_template('blog/index.html', total_posts=len(filtered_posts), posts=pagination_posts,
+                               liked_posts=id_liked_posts, page=page, per_page=per_page, pagination=pagination)
+
+    return render_template('blog/index.html', total_posts=len(filtered_posts),
+                           posts=pagination_posts, page=page, per_page=per_page, pagination=pagination)
 
 
-@bp.route('/create', methods=('GET', 'POST'))
-@login_required
+@bp.route('/<int:id>/like', methods=('POST',))
+def like_post(id):
+    """Update liked posts """
+    liked_posts = get_liked_posts()
+    id_liked_posts = list(t['id'] for t in liked_posts)
+    if (len(liked_posts) == 0) or (len(liked_posts) > 0 and id not in id_liked_posts):
+        likes = get_db().execute(
+            'SELECT p.likes'
+            ' FROM post p'
+            ' WHERE p.id = ?',
+            (id,)
+        ).fetchone()[0]
+        likes = likes + 1
+
+        db = get_db()
+        db.execute('UPDATE post SET likes = ?'
+                   'WHERE id = ?',
+                   (likes, id)
+                   )
+        db.execute('INSERT INTO user_liked_posts (author_id, post_id)'
+                   'VALUES (?, ?)',
+                   (g.user['id'], id))
+        db.commit()
+    return redirect(url_for('blog.index'))
+
+
+@ bp.route('/create', methods=('GET', 'POST'))
+@ login_required
 def create():
     """Create a new post for the current user."""
     if request.method == 'POST':
@@ -214,3 +248,23 @@ def delete(id):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_pagination(posts):
+    # get_page_arg defaults to page 1, per_page of 10
+    page, per_page, offset = get_page_args()
+    pagination_posts = posts[offset: offset + per_page]
+    pagination = Pagination(page=page, per_page=per_page, offset=offset,
+                            total=len(posts), record_name='posts', css_framework='bootstrap4')
+    return page, per_page, pagination, pagination_posts
+
+
+def get_liked_posts():
+    db = get_db()
+    liked_posts = db.execute(
+        'SELECT p.id, p.author, p.body, p.lang, p.tags, p.img_url, p.created, p.author_id, p.likes'
+        ' FROM post p INNER JOIN user_liked_posts lp ON p.id = lp.post_id AND lp.author_id = ?'
+        ' ORDER BY created DESC',
+        (g.user['id'],)
+    ).fetchall()
+    return liked_posts

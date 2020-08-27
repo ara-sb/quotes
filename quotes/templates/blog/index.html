@@ -4,6 +4,7 @@
     <div class="topnav">
         {% if g.user %}
             <a href="{{ url_for('blog.create') }}">New</a>
+            <a href="/filter?liked=true">My posts</a>
         {% endif %}
         <a href="/filter?lang=Spanish">Spanish</a>
         <a href="/filter?lang=English">English</a>
@@ -28,12 +29,23 @@
                     <div class="footer">tags: 
                     {% set list_tags = post['tags'].split(',') %}
                     {% for tag in list_tags %}
-                        <a href="{{ '/filter?tag=' ~ tag}}">{{ tag }}</a>,
+                        <a href="{{ '/filter?tag=' ~ tag}}">{{ tag }}</a>, 
                     {% endfor %} 
                     </div>
+                    <div class="footer">likes: {{ post['likes'] }}</div>
                 </div>
-                <form action="{{ url_for('blog.index') }}" method="get">
+                {% if g.user %}
+                    {% if post['id'] in liked_posts %}
+                        <a href="/filter?liked=true">
+                        <input type="submit" value="My posts"></a>
+                    {% else %}
+                        <form action="{{ url_for('blog.like_post', id=post['id']) }}" method="post">
+                        <input type="submit" value="Like">
+                    {% endif %}
+                {% else %}
+                    <form action="{{ url_for('auth.login') }}">
                     <input type="submit" value="Like">
+                {% endif %}
                 </form>
             </header>
             {% if g.user['id'] == post['author_id'] %}

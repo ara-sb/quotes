@@ -154,7 +154,7 @@ input[type="file"] {
 
 .post input[type=submit] {
     align-self: start;
-    min-width: 5em;
+    min-width: 6em;
     font-size: 0.68em;
 }
 

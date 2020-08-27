@@ -3,6 +3,7 @@
 
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS post;
+DROP TABLE IF EXISTS user_liked_posts;
 
 CREATE TABLE user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,8 +19,15 @@ CREATE TABLE post (
     lang TEXT NOT NULL,
     tags TEXT NOT NULL,
     img_url TEXT,
+    likes INTEGER DEFAULT 0 NOT NULL,
     body TEXT NOT NULL,
-    FOREIGN KEY
-(author_id) REFERENCES user
-(id)
+    FOREIGN KEY (author_id) REFERENCES user (id)
+);
+
+CREATE TABLE user_liked_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    author_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    FOREIGN KEY (author_id) REFERENCES user (id),
+    FOREIGN KEY (post_id) REFERENCES post (id)
 );
